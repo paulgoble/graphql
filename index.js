@@ -97,15 +97,86 @@ let books = [
   you can remove the placeholder query once your first own has been implemented 
 */
 
-const typeDefs = `
+const typeDefs = /* GraphQL */`
   type Query {
-    dummy: Int
+    bookCount: Int!
+    authorCount: Int!
+    allBooks(
+      author: String
+      genre: String
+      )
+      : [Book!]!
+    allAuthors: [Author!]
+  }
+
+  type Mutation {
+    addBook(
+      title: String!
+      author: String!
+      published: Int!
+      genres: [String]
+    )
+    : Book
+    editAuthor(
+      name: String!
+      setBornTo: Int!
+    )
+    : Author
+  }
+
+  type Book {
+    title: String!
+    author: String!
+    published: Int!
+    genres: [String!]!
+  }
+
+  type Author {
+    name: String!
+    born: Int
+    bookCount: Int!
   }
 `
 
 const resolvers = {
   Query: {
-    dummy: () => 0
+    bookCount: () => books.length,
+    authorCount: () => authors.length,
+    allBooks: (_,args) => {
+      let filteredBooks = books
+      if (args.author) {
+        filteredBooks = filteredBooks.filter((book) => book.author == args.author)
+      }
+      if (args.genre) {
+        filteredBooks = filteredBooks.filter((book) => book.genres.includes(args.genre))
+      }
+      return filteredBooks
+    },
+    allAuthors: () => authors.map((author) => {
+      return {
+        name: author.name,
+        born: author.born,
+        bookCount: books.filter((book) => book.author == author.name).length
+      }
+    }),
+  },
+  Mutation: {
+    addBook: (_, args) => {
+      const book = {...args}
+      books = books.concat(book)
+      if (!authors.find((author) => author.name == book.author)) {
+        authors = authors.concat({ name: book.author })
+      }
+      return book
+    },
+    editAuthor: (_, { name, setBornTo }) => {
+      const authorToEdit = authors.find((author) => author.name == name)
+      if (authorToEdit) {
+        authorToEdit.born = setBornTo
+        return authorToEdit
+      }
+      return null
+    }
   }
 }
 
