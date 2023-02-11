@@ -77,5 +77,7 @@ let books = [
 ]
 
 module.exports = {
-  books, authors
+  books,
+  authors,
+  users: []
 }
