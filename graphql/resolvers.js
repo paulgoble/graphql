@@ -15,16 +15,16 @@ const allBooks = async (_,args) => {
   let filteredBooks = []
 
   if (!args.author) {
-    filteredBooks = await Book.find({})
+    filteredBooks = await Book.find({}).populate('author')
   } else {
     const author = await Author.findOne({ name: args.author })
-    filteredBooks = await Book.find({ author: author })
+    filteredBooks = await Book.find({ author: author }).populate('author')
   }
   
   if (args.genre) {
     filteredBooks = filteredBooks.filter((book) => book.genres.includes(args.genre))
   }
-
+  
   return filteredBooks
 }
 
