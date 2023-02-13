@@ -6,7 +6,8 @@ type User {
 }
 
 type Token {
-  value: String!
+  userToken: String!
+  userInfo: User!
 }
 
 type Query {

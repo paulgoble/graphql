@@ -129,14 +129,15 @@ const login = (_, args) => {
     })
   }
 
+  const userInfo = {
+    username: userOK.username,
+    favoriteGenre: userOK.favoriteGenre,
+    id: userOK.id
+  }
+  
   return { 
-    value: jwt.sign({
-      user: {  
-        username: userOK.username,
-        id: userOK.id 
-      }
-    }, 
-    process.env.JWT_SECRET)
+    userToken: jwt.sign({ userInfo }, process.env.JWT_SECRET),
+    userInfo
   }
 }
 

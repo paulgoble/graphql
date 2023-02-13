@@ -41,7 +41,7 @@ startStandaloneServer(server, {
       const userToken = jwt.verify(
         auth.substring(7), process.env.JWT_SECRET
       )
-      const currentUser = users.find(u => userToken.user.id === u.id)
+      const currentUser = users.find(u => userToken.userInfo.id === u.id)
       
       return { currentUser }
     }
