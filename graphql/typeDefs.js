@@ -44,6 +44,10 @@ type Mutation {
   ): Token
 }
 
+type Subscription {
+  bookAdded: Book!
+}
+
 type Book {
   title: String!
   published: Int!
