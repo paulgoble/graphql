@@ -11,7 +11,9 @@ type Token {
 }
 
 type Query {
-  bookCount: Int!
+  bookCount(
+    author: String
+  ): Int!
   authorCount: Int!
   allBooks(
     author: String

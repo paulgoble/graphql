@@ -11,7 +11,16 @@ const { users } = require('../test/mock-data')
 
 //Queries:
 
-const bookCount = async () => Book.collection.countDocuments()
+const bookCount = async (_, args) => {
+  if (!args.author) {
+    return booksTotal = Book.collection.countDocuments()
+  } else {
+    const author = await Author.findOne({ name: args.author })
+    filteredBooks = await Book.find({ author: author }).populate('author')
+  }
+  return filteredBooks.length
+}
+
 const authorCount = async () => Author.collection.countDocuments()
 
 const allBooks = async (_,args) => {
@@ -33,6 +42,11 @@ const allBooks = async (_,args) => {
 
 const allAuthors = async () => {
   let authors = await Author.find({})
+
+  authors = authors.map((a) => {
+    a.bookCount = bookCount({}, { author: a.name })
+    return a
+  })
   return authors
 }
 
