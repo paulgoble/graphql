@@ -65,6 +65,24 @@ const addBook = async (_, args, { currentUser }) => {
     })
   }
 
+  if (!args.title) {
+    throw new GraphQLError('Error: A title is required', {
+      extensions: { 
+        code: 'BAD_USER_INPUT',
+        invalidArgs: args.title,
+      }
+    })
+  }
+
+  if (!args.author) {
+    throw new GraphQLError('Error: Author name is required', {
+      extensions: { 
+        code: 'BAD_USER_INPUT',
+        invalidArgs: args.author,
+      }
+    })
+  }
+
   let author = await Author.findOne({ name: args.author })
   
   if (!author) {
@@ -72,14 +90,8 @@ const addBook = async (_, args, { currentUser }) => {
     try {
       author.save()
       console.log('New author added to DB!')
-    } catch (error) {
-      throw new GraphQLError('Validation error', {
-        extensions: {
-          code: 'BAD_USER_INPUT',
-          invalidArgs: args.author,
-          error
-        }
-      })
+    } catch (err) {
+      console.log(err)
     }
   }
   const book = new Book({...args})
@@ -88,18 +100,12 @@ const addBook = async (_, args, { currentUser }) => {
   try {
     book.save()
     console.log('New book added to DB!')
-  } catch (error) {
-    throw new GraphQLError('Validation error', {
-      extensions: {
-        code: 'BAD_USER_INPUT',
-        invalidArgs: args.title,
-        error
-      }
-    })
+  } catch (err) {
+    console.log(err)
   }
+  book.author.bookCount = bookCount({}, { author: author.name })
 
   pubsub.publish('BOOK_ADDED', { bookAdded: book })
-
   return book
 }
 
@@ -141,7 +147,7 @@ const login = (_, args) => {
   const userOK = users.find((u) => u.username === user.username && u.password === user.password)
 
   if (!userOK) {
-    throw new GraphQLError('Wrong credentials', {
+    throw new GraphQLError('Invalid username or password', {
       extensions: {
         code: 'BAD_USER_INPUT'
       }
