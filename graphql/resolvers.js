@@ -8,8 +8,6 @@ const User = require('../models/user')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 
-const { users } = require('../test/mock-data')
-
 //Queries:
 
 const bookCount = async (_, args) => {
@@ -51,7 +49,10 @@ const allAuthors = async () => {
   return authors
 }
 
-const allUsers = () => users
+const allUsers = async() => {
+  const users = await User.find({})
+  return users
+}
 
 const me = (_, args, { currentUser }) => {
   return currentUser
