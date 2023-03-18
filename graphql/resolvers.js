@@ -4,8 +4,9 @@ const pubsub = new PubSub()
 
 const Author = require('../models/author')
 const Book = require('../models/book')
+const User = require('../models/user')
 const jwt = require('jsonwebtoken')
-const { v4: uuid} = require('uuid')
+const bcrypt = require('bcrypt')
 
 const { users } = require('../test/mock-data')
 
@@ -136,15 +137,23 @@ const editAuthor = async (_, args, { currentUser }) => {
 }
 
 const createUser = (_, args) => {
-  const newUser = {...args}
-  newUser.id = uuid()
-  users.push(newUser)
+  const newUser = new User({...args})
+
+  const saltRounds = 10
+  bcrypt.genSalt(saltRounds, (err, salt) => {
+    bcrypt.hash(newUser.password, salt, (err, hash) => {
+      newUser.password = hash
+      newUser.save()
+    })
+  })
+  
   return newUser
 }
 
-const login = (_, args) => {
+const login = async(_, args) => {
   const user = {...args}
-  const userOK = users.find((u) => u.username === user.username && u.password === user.password)
+  const userInfo = await User.findOne({ username: user.username })
+  const userOK = userInfo && await bcrypt.compare(user.password, userInfo.password)
 
   if (!userOK) {
     throw new GraphQLError('Invalid username or password', {
@@ -152,12 +161,6 @@ const login = (_, args) => {
         code: 'BAD_USER_INPUT'
       }
     })
-  }
-
-  const userInfo = {
-    username: userOK.username,
-    favoriteGenre: userOK.favoriteGenre,
-    id: userOK.id
   }
   
   return { 

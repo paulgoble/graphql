@@ -14,7 +14,7 @@ const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { WebSocketServer } = require('ws')
 const { useServer } = require('graphql-ws/lib/use/ws')
 
-const { users } = require('./test/mock-data')
+const User = require('./models/user')
 
 const startServer = async (PORT) => {
   const app = express()
@@ -58,7 +58,7 @@ const startServer = async (PORT) => {
           const userToken = jwt.verify(
             auth.substring(7), process.env.JWT_SECRET
           )
-          const currentUser = users.find(u => userToken.userInfo.id === u.id)
+          const currentUser = User.findOne({ id: userToken.userInfo.id} )
           
           return { currentUser }
         }
