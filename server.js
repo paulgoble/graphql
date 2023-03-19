@@ -51,7 +51,7 @@ const startServer = async (PORT) => {
     cors(),
     express.json(),
     expressMiddleware(server, {
-      listen: { port: 4000 },
+      listen: { port: PORT, host: "0.0.0.0" },
       context: async({ req, res }) => {
         const auth = req ? req.headers.authorization : null
         if (auth && auth.startsWith('Bearer ')) {
