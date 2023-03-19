@@ -39,6 +39,7 @@ type Mutation {
     username: String!
     password: String!
     favoriteGenre: String!
+    key: String!
   ): User
   login(
     username: String!

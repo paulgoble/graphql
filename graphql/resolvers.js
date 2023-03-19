@@ -138,8 +138,15 @@ const editAuthor = async (_, args, { currentUser }) => {
 }
 
 const createUser = (_, args) => {
-  const newUser = new User({...args})
+  if (args.key !== process.env.JWT_SECRET) {
+    throw new GraphQLError('Invalid key', {
+      extensions: {
+        code: 'BAD_USER_INPUT'
+      }
+    })
+  }
 
+  const newUser = new User({...args})
   const saltRounds = 10
   bcrypt.genSalt(saltRounds, (err, salt) => {
     bcrypt.hash(newUser.password, salt, (err, hash) => {
