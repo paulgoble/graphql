@@ -1,41 +1,43 @@
-const { GraphQLError } = require('graphql')
-const { PubSub } = require('graphql-subscriptions')
+const { GraphQLError } = require("graphql")
+const { PubSub } = require("graphql-subscriptions")
 const pubsub = new PubSub()
 
-const Author = require('../models/author')
-const Book = require('../models/book')
-const User = require('../models/user')
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcrypt')
+const Author = require("../models/author")
+const Book = require("../models/book")
+const User = require("../models/user")
+const jwt = require("jsonwebtoken")
+const bcrypt = require("bcrypt")
 
 //Queries:
 
 const bookCount = async (_, args) => {
   if (!args.author) {
-    return booksTotal = Book.collection.countDocuments()
+    return (booksTotal = Book.collection.countDocuments())
   } else {
     const author = await Author.findOne({ name: args.author })
-    filteredBooks = await Book.find({ author: author }).populate('author')
+    filteredBooks = await Book.find({ author: author }).populate("author")
   }
   return filteredBooks.length
 }
 
 const authorCount = async () => Author.collection.countDocuments()
 
-const allBooks = async (_,args) => {
+const allBooks = async (_, args) => {
   let filteredBooks = []
 
   if (!args.author) {
-    filteredBooks = await Book.find({}).populate('author')
+    filteredBooks = await Book.find({}).populate("author")
   } else {
     const author = await Author.findOne({ name: args.author })
-    filteredBooks = await Book.find({ author: author }).populate('author')
+    filteredBooks = await Book.find({ author: author }).populate("author")
   }
-  
+
   if (args.genre) {
-    filteredBooks = filteredBooks.filter((book) => book.genres.includes(args.genre))
+    filteredBooks = filteredBooks.filter((book) =>
+      book.genres.includes(args.genre)
+    )
   }
-  
+
   return filteredBooks
 }
 
@@ -49,7 +51,7 @@ const allAuthors = async () => {
   return authors
 }
 
-const allUsers = async() => {
+const allUsers = async () => {
   const users = await User.find({})
   return users
 }
@@ -62,59 +64,59 @@ const me = (_, args, { currentUser }) => {
 
 const addBook = async (_, args, { currentUser }) => {
   if (!currentUser) {
-    throw new GraphQLError('Wrong credentials', {
-      extensions: { code: 'BAD_USER_INPUT' }
+    throw new GraphQLError("Wrong credentials", {
+      extensions: { code: "BAD_USER_INPUT" },
     })
   }
 
   if (!args.title) {
-    throw new GraphQLError('Error: A title is required', {
-      extensions: { 
-        code: 'BAD_USER_INPUT',
+    throw new GraphQLError("Error: A title is required", {
+      extensions: {
+        code: "BAD_USER_INPUT",
         invalidArgs: args.title,
-      }
+      },
     })
   }
 
   if (!args.author) {
-    throw new GraphQLError('Error: Author name is required', {
-      extensions: { 
-        code: 'BAD_USER_INPUT',
+    throw new GraphQLError("Error: Author name is required", {
+      extensions: {
+        code: "BAD_USER_INPUT",
         invalidArgs: args.author,
-      }
+      },
     })
   }
 
   let author = await Author.findOne({ name: args.author })
-  
+
   if (!author) {
     author = new Author({ name: args.author })
     try {
       author.save()
-      console.log('New author added to DB!')
+      console.log("New author added to DB!")
     } catch (err) {
       console.log(err)
     }
   }
-  const book = new Book({...args})
+  const book = new Book({ ...args })
   book.author = author
 
   try {
     book.save()
-    console.log('New book added to DB!')
+    console.log("New book added to DB!")
   } catch (err) {
     console.log(err)
   }
   book.author.bookCount = bookCount({}, { author: author.name })
 
-  pubsub.publish('BOOK_ADDED', { bookAdded: book })
+  pubsub.publish("BOOK_ADDED", { bookAdded: book })
   return book
 }
 
 const editAuthor = async (_, args, { currentUser }) => {
   if (!currentUser) {
-    throw new GraphQLError('Wrong credentials', {
-      extensions: { code: 'BAD_USER_INPUT' }
+    throw new GraphQLError("Wrong credentials", {
+      extensions: { code: "BAD_USER_INPUT" },
     })
   }
 
@@ -123,14 +125,14 @@ const editAuthor = async (_, args, { currentUser }) => {
 
   try {
     author.save()
-    console.log('Author updated!')
+    console.log("Author updated!")
   } catch (error) {
-    throw new GraphQLError('Validation error', {
+    throw new GraphQLError("Validation error", {
       extensions: {
-        code: 'BAD_USER_INPUT',
+        code: "BAD_USER_INPUT",
         invalidArgs: args.name,
-        error
-      }
+        error,
+      },
     })
   }
 
@@ -139,14 +141,14 @@ const editAuthor = async (_, args, { currentUser }) => {
 
 const createUser = (_, args) => {
   if (args.key !== process.env.JWT_SECRET) {
-    throw new GraphQLError('Invalid key', {
+    throw new GraphQLError("Invalid key", {
       extensions: {
-        code: 'BAD_USER_INPUT'
-      }
+        code: "BAD_USER_INPUT",
+      },
     })
   }
 
-  const newUser = new User({...args})
+  const newUser = new User({ ...args })
   const saltRounds = 10
   bcrypt.genSalt(saltRounds, (err, salt) => {
     bcrypt.hash(newUser.password, salt, (err, hash) => {
@@ -154,26 +156,27 @@ const createUser = (_, args) => {
       newUser.save()
     })
   })
-  
+
   return newUser
 }
 
-const login = async(_, args) => {
-  const user = {...args}
+const login = async (_, args) => {
+  const user = { ...args }
   const userInfo = await User.findOne({ username: user.username })
-  const userOK = userInfo && await bcrypt.compare(user.password, userInfo.password)
+  const userOK =
+    userInfo && (await bcrypt.compare(user.password, userInfo.password))
 
   if (!userOK) {
-    throw new GraphQLError('Invalid username or password', {
+    throw new GraphQLError("Invalid username or password", {
       extensions: {
-        code: 'BAD_USER_INPUT'
-      }
+        code: "BAD_USER_INPUT",
+      },
     })
   }
-  
-  return { 
+
+  return {
     userToken: jwt.sign({ userInfo }, process.env.JWT_SECRET),
-    userInfo
+    userInfo,
   }
 }
 
@@ -186,17 +189,17 @@ module.exports = {
     allBooks,
     allAuthors,
     allUsers,
-    me
+    me,
   },
   Mutation: {
     addBook,
     editAuthor,
     createUser,
-    login
+    login,
   },
   Subscription: {
     bookAdded: {
-      subscribe: () => pubsub.asyncIterator('BOOK_ADDED')
-    }
+      subscribe: () => pubsub.asyncIterator("BOOK_ADDED"),
+    },
   },
 }
